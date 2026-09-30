@@ -4,16 +4,19 @@ The service never reads the wall clock, so every behaviour can be reproduced
 from the ordered sequence of operations alone.
 """
 
+import threading
+
 
 class LogicalClock:
     """Monotonic tick counter used in place of wall-clock time."""
 
-    __slots__ = ("_tick",)
+    __slots__ = ("_tick", "_lock")
 
     def __init__(self, start: int = 0) -> None:
         if start < 0:
             raise ValueError("clock start must not be negative")
         self._tick = start
+        self._lock = threading.Lock()
 
     @property
     def tick(self) -> int:
@@ -24,8 +27,9 @@ class LogicalClock:
         """Move the clock forward and return the new tick."""
         if steps < 1:
             raise ValueError("advance requires at least one step")
-        self._tick += steps
-        return self._tick
+        with self._lock:
+            self._tick += steps
+            return self._tick
 
     def elapsed(self, since: int) -> int:
         """Number of ticks that passed since ``since``."""

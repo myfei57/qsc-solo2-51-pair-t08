@@ -70,6 +70,18 @@ class RinseFailedError(ContractError):
     """Raised when a rack rinse completes without clearing the rack."""
 
 
+class FlushLimitExceededError(ContractError):
+    """Raised when a flush used every extension without reaching the endpoint."""
+
+
+class FlushIncompleteError(ContractError):
+    """Raised when a flush is asked to release while it is still running."""
+
+
+class FlushLimitVersionError(ContractError):
+    """Raised when a limits revision is published out of version order."""
+
+
 class MediaNotReadyError(ContractError):
     """Raised when filtration is demanded before a media backwash."""
 

@@ -9,6 +9,10 @@ AUDIT_SEQUENCE = "audit/sequence"
 AUDIT_EVENT_PREFIX = "audit/event/"
 AUDIT_LAST_PREFIX = "audit/last/"
 
+FLUSH_LIMITS_CURRENT = "flush/limits/current"
+FLUSH_LIMIT_VERSION_PREFIX = "flush/limits/version/"
+FLUSH_RUN_PREFIX = "flush/run/"
+
 
 def audit_event_key(sequence: int) -> str:
     """Key holding the event written at ``sequence``."""
@@ -20,3 +24,17 @@ def audit_event_key(sequence: int) -> str:
 def audit_last_key(kind: str) -> str:
     """Key holding the sequence of the latest event of ``kind``."""
     return f"{AUDIT_LAST_PREFIX}{kind}"
+
+
+def flush_limit_key(version: int) -> str:
+    """Key holding the flush limits document of one revision."""
+    if version < 1:
+        raise ValueError("flush limits versions start at one")
+    return f"{FLUSH_LIMIT_VERSION_PREFIX}{version:06d}"
+
+
+def flush_run_key(run_id: str) -> str:
+    """Key holding the persisted snapshot of one flush run."""
+    if not run_id:
+        raise ValueError("flush run id must not be empty")
+    return f"{FLUSH_RUN_PREFIX}{run_id}"

@@ -11,8 +11,11 @@ from ..chem.tank import ChemicalTank
 from ..clock import LogicalClock
 from ..filter.media import MediaFilter
 from ..filter.rack import Rack
+from ..flush.limits import FlushLimits
 from ..flush.rinse import RinseCycle
+from ..flush.sample import FlushSample
 from ..flush.start import Flusher
+from ..flush.supervisor import FlushSupervisor
 from ..intake.feed import Feed
 from ..intake.gate import Gate
 from ..intake.interlock import GateInterlock
@@ -72,6 +75,7 @@ class Plant:
         self.hp_pump = new()
         self.flusher = Flusher()
         self.rinse = RinseCycle()
+        self.flush_runs = FlushSupervisor(store, clock, recorder)
         self.tank_set = TankSet(current="tank-a", standby="tank-b")
         self.product = ProductTank()
         self.level = Level()
@@ -218,6 +222,43 @@ class Plant:
     def build(self) -> BuildInfo:
         """Describe the running build."""
         return version.build()
+
+    # ----------------------------------------------------- flush endpoint
+
+    def start_flush_run(self, run_id: str | None = None) -> dict[str, Any]:
+        """Start a turbidity-driven flush run against the current limits."""
+        receipt = self.flush_runs.start_run(run_id)
+        return {
+            "created": receipt.created,
+            "run": receipt.run.snapshot(),
+        }
+
+    def evaluate_flush_sample(
+        self, sample: FlushSample, run_id: str | None = None
+    ) -> dict[str, Any]:
+        """Judge one outlet sample and extend, release or trip the run."""
+        return self.flush_runs.evaluate(sample, run_id).to_dict()
+
+    def release_flush(self, run_id: str | None = None) -> dict[str, Any]:
+        """Release only a run whose endpoint was actually reached."""
+        return self.flush_runs.release(run_id).to_dict()
+
+    def flush_run_view(self, run_id: str | None = None) -> dict[str, Any]:
+        """Run state together with the audit trail behind every decision."""
+        return self.flush_runs.view(run_id)
+
+    def flush_runs_list(self) -> list[dict[str, Any]]:
+        """Every flush run, newest first."""
+        return self.flush_runs.list_runs()
+
+    def flush_limits_view(self) -> dict[str, Any]:
+        """Current limits revision and the full revision history."""
+        current = self.flush_runs.current_limits()
+        return {"current": current.to_dict(), "revisions": self.flush_runs.revisions()}
+
+    def publish_flush_limits(self, limits: FlushLimits) -> dict[str, Any]:
+        """Publish the next limits revision; running runs keep their version."""
+        return self.flush_runs.publish_limits(limits).to_dict()
 
     def snapshot(self) -> Snapshot:
         """Frozen view of the persisted document."""

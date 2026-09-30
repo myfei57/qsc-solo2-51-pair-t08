@@ -6,6 +6,9 @@ from ..errors import (
     AlarmNotActiveError,
     ContractError,
     FeedAlreadyStoppedError,
+    FlushIncompleteError,
+    FlushLimitExceededError,
+    FlushLimitVersionError,
     FlushNotEffectiveError,
     FlowNotReadyError,
     HandoffIncompleteError,
@@ -23,7 +26,7 @@ from ..errors import (
     UnknownKeyError,
     ValveNotOpenError,
 )
-from . import handlers, operations, routes
+from . import flush_api, handlers, operations, routes
 from .http import Request, Response, error_response
 
 Handler = Callable[["Console", Request], Response]
@@ -43,6 +46,9 @@ CONFLICT = (
     TransferFailedError,
     RinseFailedError,
     MediaNotReadyError,
+    FlushLimitExceededError,
+    FlushIncompleteError,
+    FlushLimitVersionError,
 )
 MALFORMED = (InvalidEfficiencyError, InvalidStagesError)
 MISSING = (UnknownKeyError,)
@@ -53,6 +59,12 @@ ROUTES: tuple[tuple[str, str, Handler], ...] = (
     ("POST", routes.SHUTDOWN, operations.shutdown),
     ("POST", routes.SWITCH, operations.switch),
     ("POST", routes.MAINTAIN, operations.maintain),
+    ("POST", routes.FLUSH_RUN_START, flush_api.start),
+    ("POST", routes.FLUSH_RUN_SAMPLE, flush_api.sample),
+    ("POST", routes.FLUSH_RUN_RELEASE, flush_api.release),
+    ("GET", routes.FLUSH_RUNS, flush_api.runs),
+    ("GET", routes.FLUSH_LIMITS, flush_api.limits),
+    ("POST", routes.FLUSH_LIMITS, flush_api.limits),
 )
 
 
