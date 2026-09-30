@@ -12,6 +12,7 @@ from ..clock import LogicalClock
 from ..filter.media import MediaFilter
 from ..filter.rack import Rack
 from ..flush.rinse import RinseCycle
+from ..flush.service import FlushService
 from ..flush.start import Flusher
 from ..intake.feed import Feed
 from ..intake.gate import Gate
@@ -72,6 +73,7 @@ class Plant:
         self.hp_pump = new()
         self.flusher = Flusher()
         self.rinse = RinseCycle()
+        self.flush_service = FlushService(recorder, clock)
         self.tank_set = TankSet(current="tank-a", standby="tank-b")
         self.product = ProductTank()
         self.level = Level()
@@ -140,6 +142,36 @@ class Plant:
         self.rinse.run()
         self.store.put(keys.PLANT_MAINTAINED_AT, self.clock.tick)
         return self.recorder.log("maintain", "maintenance completed")
+
+    # ------------------------------------------------- endpoint flush
+
+    def flush_start(self):
+        """Start an endpoint-guided flush round."""
+        return self.flush_service.start_run()
+
+    def flush_evaluate(self, sample, key: str | None = None):
+        """Evaluate one effluent sample against the pinned limits version."""
+        return self.flush_service.evaluate(sample, key)
+
+    def flush_migrate(
+        self,
+        *,
+        turbidity_limit: float,
+        residual_limit: float,
+        extend_seconds: int,
+        max_seconds: int,
+    ):
+        """Adopt a new endpoint limits generation."""
+        return self.flush_service.migrate(
+            turbidity_limit=turbidity_limit,
+            residual_limit=residual_limit,
+            extend_seconds=extend_seconds,
+            max_seconds=max_seconds,
+        )
+
+    def flush_endpoint(self) -> dict[str, Any]:
+        """Console view of the active round and its limits version."""
+        return self.flush_service.view()
 
     def pump_differential(self) -> float:
         """Pressure differential over the array's final stage."""

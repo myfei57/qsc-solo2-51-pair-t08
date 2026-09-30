@@ -80,3 +80,11 @@ class UnknownKeyError(ContractError):
 
 class StoreError(ContractError):
     """Raised when the file-backed store cannot persist a write."""
+
+
+class InvalidLimitsError(ContractError):
+    """Raised when endpoint flush limits are not well formed."""
+
+
+class FlushRunNotStartedError(ContractError):
+    """Raised when an endpoint flush is evaluated before a round was started."""

@@ -105,6 +105,11 @@ def version(console, request: Request) -> Response:
     return json_response({"label": console.plant.build().label()})
 
 
+def flush_endpoint(console, request: Request) -> Response:
+    """Active endpoint flush round and its limits version."""
+    return json_response(console.plant.flush_endpoint())
+
+
 ROUTE_TABLE = (
     (routes.HEALTH, health),
     (routes.STATUS, status),
@@ -117,6 +122,7 @@ ROUTE_TABLE = (
     (routes.OPS_FEED, feed),
     (routes.OPS_RECOVERY, recovery),
     (routes.OPS_FLUSH, flush),
+    (routes.FLUSH_ENDPOINT, flush_endpoint),
     (routes.OPS_DOSING, dosing),
     (routes.OPS_HYDRAULICS, hydraulics),
     (routes.OPS_TANK, tank),
